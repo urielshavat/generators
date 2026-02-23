@@ -30,8 +30,17 @@
         }
         .modal.active { display: flex; }
 
+        #entry-modal {
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(4px);
+        }
+
         #maintenance-modal {
             z-index: 60;
+        }
+        #hours-report-modal {
+            z-index: 70;
         }
         /* Toast styles */
         #toast {
@@ -47,9 +56,41 @@
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
         #toast.active { display: flex; align-items: center; gap: 12px; }
+
+        /* View-only mode styles */
+        .edit-only { display: none !important; }
+        body.edit-mode .edit-only { display: inline-flex !important; }
+        body.edit-mode button.edit-only { display: flex !important; }
     </style>
 </head>
 <body class="p-4 md:p-8">
+    <!-- Entry Modal -->
+    <div id="entry-modal" class="modal active">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl text-center">
+            <h2 class="text-3xl font-bold mb-2 text-slate-900">ברוכים הבאים</h2>
+            <p class="text-slate-500 mb-8">מערכת ניהול אחזקת גנרטורים</p>
+            
+            <div class="space-y-4">
+                <button onclick="setMode('view')" class="w-full py-4 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    כניסה לצפייה בלבד
+                </button>
+                
+                <div class="relative py-4">
+                    <div class="absolute inset-0 flex items-center"><span class="w-full border-t"></span></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-slate-500">או</span></div>
+                </div>
+
+                <div id="password-section" class="space-y-4">
+                    <input type="password" id="entry-password" placeholder="הזן סיסמת עריכה" class="w-full p-4 border rounded-xl text-center text-xl tracking-widest outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button onclick="setMode('edit')" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+                        כניסה למצב עריכה
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="app" class="max-w-7xl mx-auto pb-24">
         <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
@@ -58,11 +99,6 @@
                 <p class="text-slate-500">מעקב, תחזוקה ומלאי חלפים</p>
             </div>
         </header>
-
-        <!-- Settings Button (Discreet) -->
-        <button onclick="openSettings()" class="fixed top-4 left-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all z-50" title="הגדרות">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
 
         <!-- Search -->
         <div class="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row gap-4">
@@ -79,10 +115,11 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-right border-collapse">
                     <thead>
-                        <tr class="bg-slate-50 border-bottom text-slate-600 font-semibold">
+                        <tr class="bg-slate-50 border-bottom text-slate-600 font-semibold text-sm">
                             <th class="p-4">גנרטור</th>
                             <th class="p-4">ימים לטיפול</th>
-                            <th class="p-4">מלאי פילטרים</th>
+                            <th class="p-4">טיפול אחרון</th>
+                            <th class="p-4">מלאי</th>
                         </tr>
                     </thead>
                     <tbody id="generator-table-body">
@@ -94,7 +131,11 @@
 
         <!-- Bottom Actions -->
         <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg z-40 flex justify-center gap-4">
-            <button onclick="openAddModal()" class="bg-emerald-600 text-white px-8 py-3 rounded-xl hover:bg-emerald-700 transition-all flex items-center gap-2 shadow-lg active:scale-95 font-bold">
+            <button onclick="openExportModal()" class="bg-slate-100 text-slate-700 px-4 py-3 rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2 border border-slate-200 active:scale-95 font-bold">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                ייצוא
+            </button>
+            <button onclick="openAddModal()" class="edit-only bg-emerald-600 text-white px-8 py-3 rounded-xl hover:bg-emerald-700 transition-all flex items-center gap-2 shadow-lg active:scale-95 font-bold">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                 הוסף
             </button>
@@ -113,11 +154,11 @@
                 <input type="hidden" id="maint-id">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">תאריך הטיפול (dd-mm-yyyy)</label>
-                        <input type="text" id="maint-date" required placeholder="dd-mm-yyyy" class="w-full border rounded-lg p-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">תאריך הטיפול</label>
+                        <input type="date" id="maint-date" required class="w-full border rounded-lg p-2">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">שעות מנוע נוכחיות</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">שעות מנוע בטיפול</label>
                         <input type="number" id="maint-hours" required class="w-full border rounded-lg p-2">
                     </div>
                     <div>
@@ -147,23 +188,27 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal">
+    <!-- Hours Report Modal -->
+    <div id="hours-report-modal" class="modal">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h2 class="text-2xl font-bold mb-4">הגדרות מערכת</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">מזהה פריסה (Deployment ID)</label>
-                    <input type="text" id="script-id-input" class="w-full border rounded-lg p-2" placeholder="AKfycb...">
-                    <p class="text-[10px] text-slate-400 mt-1">הזן את המזהה מתוך ה-URL של ה-Web App</p>
+            <h2 class="text-2xl font-bold mb-4">דיווח שעות מנוע</h2>
+            <form id="hours-report-form" onsubmit="handleHoursReportSubmit(event)">
+                <input type="hidden" id="hours-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">תאריך דיווח</label>
+                        <input type="date" id="hours-date" required class="w-full border rounded-lg p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">שעות מנוע נוכחיות</label>
+                        <input type="number" id="hours-value" required class="w-full border rounded-lg p-2">
+                    </div>
                 </div>
-            </div>
-            <div class="flex justify-end items-center mt-6">
-                <div class="flex gap-2">
-                    <button onclick="closeModal('settings-modal')" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">ביטול</button>
-                    <button onclick="saveSettings()" class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800">שמור</button>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" onclick="closeModal('hours-report-modal')" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">ביטול</button>
+                    <button type="submit" class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800">שמור דיווח</button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -179,7 +224,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">הספק</label>
-                        <input type="text" id="add-provider" class="w-full border rounded-lg p-2">
+                        <input type="text" id="add-power" class="w-full border rounded-lg p-2">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">מק"ט יצרן</label>
@@ -253,8 +298,8 @@
                         <h3 class="font-bold text-slate-800 mb-2">נתוני שעות מנוע אחרונים</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">תאריך טיפול אחרון (dd-mm-yyyy)</label>
-                                <input type="text" id="add-last-check-date" placeholder="dd-mm-yyyy" class="w-full border rounded-lg p-2 text-sm">
+                                <label class="block text-xs font-medium text-slate-500 mb-1">תאריך טיפול אחרון</label>
+                                <input type="date" id="add-last-check-date" class="w-full border rounded-lg p-2 text-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-500 mb-1">שעות מנוע בטיפול</label>
@@ -295,8 +340,12 @@
                 <input type="hidden" id="edit-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">מיקום</label>
+                        <input type="text" id="edit-location" required class="w-full border rounded-lg p-2">
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">הספק</label>
-                        <input type="text" id="edit-provider" class="w-full border rounded-lg p-2">
+                        <input type="text" id="edit-power" class="w-full border rounded-lg p-2">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">מק"ט יצרן</label>
@@ -309,6 +358,10 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">מס' צה"לי</label>
                         <input type="text" id="edit-idf-number" class="w-full border rounded-lg p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">מזין את...</label>
+                        <input type="text" id="edit-feeds" class="w-full border rounded-lg p-2">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">ייעוד</label>
@@ -366,8 +419,8 @@
                         <h3 class="font-bold text-slate-800 mb-2">נתוני שעות מנוע אחרונים</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">תאריך טיפול אחרון (dd-mm-yyyy)</label>
-                                <input type="text" id="edit-last-check-date" placeholder="dd-mm-yyyy" class="w-full border rounded-lg p-2 text-sm">
+                                <label class="block text-xs font-medium text-slate-500 mb-1">תאריך טיפול אחרון</label>
+                                <input type="date" id="edit-last-check-date" class="w-full border rounded-lg p-2 text-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-500 mb-1">שעות מנוע בטיפול</label>
@@ -416,7 +469,7 @@
                 <!-- Content injected by JS -->
             </div>
             <div class="mt-8 flex justify-end gap-3">
-                <button id="details-edit-btn" class="px-6 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors">ערוך פרטים</button>
+                <button id="details-edit-btn" class="edit-only px-6 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors">ערוך פרטים</button>
                 <button onclick="closeModal('details-modal')" class="px-6 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">סגור</button>
             </div>
         </div>
@@ -447,6 +500,46 @@
         </div>
     </div>
 
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-slate-900">ייצוא סיכום</h2>
+                <button onclick="closeModal('export-modal')" class="p-2 hover:bg-slate-100 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-bold text-slate-700">סיכום מקוצר</label>
+                        <button onclick="copyToClipboard('export-short-text')" class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            העתק
+                        </button>
+                    </div>
+                    <textarea id="export-short-text" readonly class="w-full h-32 border rounded-xl p-3 text-sm bg-slate-50 font-mono"></textarea>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-bold text-slate-700">סיכום מפורט</label>
+                        <button onclick="copyToClipboard('export-detailed-text')" class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            העתק
+                        </button>
+                    </div>
+                    <textarea id="export-detailed-text" readonly class="w-full h-64 border rounded-xl p-3 text-sm bg-slate-50 font-mono"></textarea>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeModal('export-modal')" class="px-6 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors">סגור</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div id="toast">
         <span id="toast-message"></span>
@@ -454,60 +547,43 @@
     </div>
 
     <script>
+        const SCRIPT_ID = 'AKfycbz9vw-xWnD7sXFW5bc2ti0Q-WGat56-8xthGxDK-3gDz4WO7w6YbPxJj2xswqIuH5cc';
         let generators = [];
         let lastAction = null;
         let undoTimeout = null;
+        let isEditMode = false;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const idParam = urlParams.get('id') || urlParams.get('ID');
-            
-            if (idParam) {
-                localStorage.setItem('gas_script_id', idParam);
-                document.getElementById('script-id-input').value = idParam;
-                fetchData();
-            } else {
-                const savedId = localStorage.getItem('gas_script_id');
-                if (savedId) {
-                    document.getElementById('script-id-input').value = savedId;
-                    fetchData();
-                } else {
-                    openSettings();
-                }
-            }
+            // Check if already logged in (optional, but let's keep it simple for now)
+            // fetchData(); // Don't fetch until mode is set
         });
 
-        function getScriptUrl() {
-            const id = localStorage.getItem('gas_script_id');
-            return id ? `https://script.google.com/macros/s/${id}/exec` : null;
+        function setMode(mode) {
+            if (mode === 'edit') {
+                const password = document.getElementById('entry-password').value;
+                if (password === '5555') {
+                    isEditMode = true;
+                    document.body.classList.add('edit-mode');
+                    closeModal('entry-modal');
+                    fetchData();
+                } else {
+                    showToast('סיסמה שגויה');
+                }
+            } else {
+                isEditMode = false;
+                document.body.classList.remove('edit-mode');
+                closeModal('entry-modal');
+                fetchData();
+            }
         }
 
-        function saveSettings() {
-            let id = document.getElementById('script-id-input').value.trim();
-            if (!id) {
-                showToast('אנא הזן מזהה פריסה');
-                return;
-            }
-            // If user pasted a full URL, extract the ID
-            if (id.includes('/macros/s/')) {
-                const match = id.match(/\/macros\/s\/([^\/]+)/);
-                if (match) id = match[1];
-            }
-            
-            localStorage.setItem('gas_script_id', id);
-            closeModal('settings-modal');
-            showToast('ההגדרות נשמרו');
-            fetchData();
+        function getScriptUrl() {
+            return `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
         }
 
         async function runSetup() {
             const url = getScriptUrl();
-            if (!url) {
-                showToast('אנא הזן URL ושמור לפני ההתקנה');
-                return;
-            }
-
             showToast('מתקין טבלה... אנא המתן');
             try {
                 const response = await fetch(url, {
@@ -531,11 +607,6 @@
 
         async function fetchData() {
             const url = getScriptUrl();
-            if (!url) {
-                console.warn('No Script URL provided');
-                return;
-            }
-
             const refreshBtn = document.getElementById('refresh-btn');
             const originalContent = refreshBtn.innerHTML;
             refreshBtn.disabled = true;
@@ -592,22 +663,56 @@
             }
         }
 
-        function calculateDaysToMaintenance(lastDate) {
-            if (!lastDate) return -999;
-            const last = new Date(lastDate);
-            // Maintenance every 500 hours. Assuming 24 hours per day.
-            // 500 / 24 = 20.833 days
-            const daysAllowed = 500 / 24;
-            const next = new Date(last);
-            next.setHours(next.getHours() + 500); // 500 hours later
+        function formatDateShort(dateString) {
+            if (!dateString) return '-';
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return dateString;
+                const d = String(date.getDate()).padStart(2, '0');
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                return `${d}-${m}`;
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function formatDateForInput(dateString) {
+            const date = dateString ? new Date(dateString) : new Date();
+            if (isNaN(date.getTime())) return '';
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function calculateDaysToMaintenance(gen) {
+            if (gen.purpose === 'גיבוי') return null;
             
-            const diff = next - new Date();
-            return Math.floor(diff / (1000 * 60 * 60 * 24));
+            let lastMaintHours = 0;
+            try {
+                const maintData = JSON.parse(gen.lastMaintenanceDate || '{}');
+                lastMaintHours = parseInt(maintData.hours) || 0;
+            } catch(e) {
+                lastMaintHours = parseInt(gen.engineHoursAtLastMaintenance) || 0;
+            }
+
+            let currentHours = lastMaintHours;
+            try {
+                const hoursData = JSON.parse(gen.engineHoursAtLastMaintenance || '{}');
+                currentHours = parseInt(hoursData.hours) || lastMaintHours;
+            } catch(e) {}
+            
+            const remainingHours = (lastMaintHours + 500) - currentHours;
+            const daysRemaining = Math.floor(remainingHours / 24);
+            
+            return daysRemaining;
         }
 
         function getUrgencyScore(gen) {
-            const days = calculateDaysToMaintenance(gen.lastMaintenanceDate);
+            if (gen.purpose === 'גיבוי') return 0;
+            const days = calculateDaysToMaintenance(gen);
             if (gen.status === 'תקול') return 1000;
+            if (days === null) return 0;
             if (days <= 0) return 500 - days;
             if (days <= 14) return 100 - days;
             return 0;
@@ -620,41 +725,76 @@
             const filtered = generators
                 .filter(g => {
                     if (g.status === 'deleted') return false;
-                    const matchesSearch = g.location.toLowerCase().includes(searchTerm) || 
-                                         g.provider.toLowerCase().includes(searchTerm) ||
-                                         g.maintenanceCompany.toLowerCase().includes(searchTerm);
-                    return matchesSearch;
+                    const searchFields = [
+                        g.location,
+                        g.power,
+                        g.maintenanceCompany,
+                        g.manufacturerPartNumber,
+                        g.idfNumber,
+                        g.feeds,
+                        g.oilFilterPN,
+                        g.fuelFilterPN,
+                        g.airFilterPN,
+                        g.notes
+                    ].map(f => (f || '').toLowerCase());
+                    
+                    return searchFields.some(f => f.includes(searchTerm));
                 })
                 .sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a));
 
             tbody.innerHTML = filtered.map(gen => {
-                const days = calculateDaysToMaintenance(gen.lastMaintenanceDate);
+                const days = calculateDaysToMaintenance(gen);
                 let rowClass = 'safe';
-                if (gen.status === 'תקול') rowClass = 'overdue';
-                else if (days <= 0) rowClass = 'overdue';
-                else if (days <= 14) rowClass = 'warning';
+                let daysDisplay = '';
+                
+                if (gen.purpose === 'גיבוי') {
+                    daysDisplay = '<span class="text-slate-400">--גיבוי--</span>';
+                } else {
+                    if (gen.status === 'תקול' || (days !== null && days <= 0)) rowClass = 'overdue';
+                    else if (days !== null && days <= 14) rowClass = 'warning';
+                    daysDisplay = `<div class="font-medium ${days <= 0 ? 'text-red-600' : ''}">
+                        ${days <= 0 ? 'בפיגור של ' + Math.abs(days) + ' ימים' : days + ' ימים'}
+                    </div>`;
+                }
 
                 return `
                     <tr class="${rowClass} border-b hover:bg-slate-50 transition-colors cursor-pointer" onclick="openDetailsModal('${gen._row}')">
                         <td class="p-4">
                             <div>
                                 <div class="font-bold">${gen.location}</div>
-                                <div class="text-xs text-slate-500 mb-1">${gen.purpose || 'פעיל'} | ${gen.provider}</div>
+                                <div class="text-xs text-slate-500 mb-1">${gen.purpose || 'פעיל'} | ${gen.power || '-'}</div>
                                 <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${gen.status === 'תקין' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
                                     ${gen.status}
                                 </span>
                             </div>
                         </td>
                         <td class="p-4">
-                            <div class="font-medium ${days <= 0 ? 'text-red-600' : ''}">
-                                ${days <= 0 ? 'בפיגור של ' + Math.abs(days) + ' ימים' : days + ' ימים'}
-                            </div>
-                            <div class="text-xs text-slate-500">טיפול אחרון: ${formatDate(gen.lastMaintenanceDate)}</div>
+                            ${daysDisplay}
                         </td>
                         <td class="p-4">
-                            <div class="flex gap-2 text-xs">
-                                <span class="${gen.oilFilterStock < 1 ? 'text-red-600 font-bold' : 'text-green-600'}">שמן: ${gen.oilFilterStock}</span>
-                                <span class="${gen.fuelFilterStock < 1 ? 'text-red-600 font-bold' : 'text-green-600'}">דלק: ${gen.fuelFilterStock}</span>
+                            <div class="text-xs space-y-1">
+                                <div class="font-medium">${(() => {
+                                    try {
+                                        const data = JSON.parse(gen.lastMaintenanceDate || '{}');
+                                        return formatDateShort(data.date);
+                                    } catch(e) { return formatDateShort(gen.lastMaintenanceDate); }
+                                })()}</div>
+                                <div class="text-slate-500">${(() => {
+                                    try {
+                                        const data = JSON.parse(gen.lastMaintenanceDate || '{}');
+                                        return (data.hours || 0) + ' ש';
+                                    } catch(e) { 
+                                        let h = gen.engineHoursAtLastMaintenance;
+                                        try { h = JSON.parse(h).hours; } catch(err) {}
+                                        return (h || 0) + ' ש';
+                                    }
+                                })()}</div>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <div class="flex flex-col gap-1 text-[10px]">
+                                <span class="${gen.oilFilterStock < 1 ? 'text-red-600 font-bold' : 'text-slate-600'}">שמן: ${gen.oilFilterStock}</span>
+                                <span class="${gen.fuelFilterStock < 1 ? 'text-red-600 font-bold' : 'text-slate-600'}">דלק: ${gen.fuelFilterStock}</span>
                                 <span class="${gen.airFilterStock < 1 ? 'text-red-600 font-bold' : 'text-green-600'}">אוויר: ${gen.airFilterStock}</span>
                             </div>
                         </td>
@@ -664,25 +804,7 @@
         }
 
         function renderStats() {
-            const statsGrid = document.getElementById('stats-grid');
-            const total = generators.length;
-            const faulty = generators.filter(g => g.status === 'תקול').length;
-            const overdue = generators.filter(g => calculateDaysToMaintenance(g.lastMaintenanceDate) <= 0).length;
-            const lowStock = generators.filter(g => g.oilFilterStock < 2 || g.fuelFilterStock < 2 || g.airFilterStock < 2).length;
-
-            const stats = [
-                { label: 'סה"כ גנרטורים', value: total, color: 'slate' },
-                { label: 'תקולים', value: faulty, color: 'red' },
-                { label: 'בפיגור טיפול', value: overdue, color: 'amber' },
-                { label: 'מלאי נמוך', value: lowStock, color: 'orange' }
-            ];
-
-            statsGrid.innerHTML = stats.map(s => `
-                <div class="bg-white p-4 rounded-xl shadow-sm border-r-4 border-${s.color}-500">
-                    <div class="text-sm text-slate-500">${s.label}</div>
-                    <div class="text-2xl font-bold text-slate-900">${s.value}</div>
-                </div>
-            `).join('');
+            // Unused
         }
 
         function toggleFaultDescription(prefix) {
@@ -711,9 +833,53 @@
         function openMaintenanceModal(id) {
             const gen = generators.find(g => g._row == id);
             document.getElementById('maint-id').value = id;
-            document.getElementById('maint-hours').value = gen.engineHoursAtLastMaintenance || '';
-            document.getElementById('maint-date').value = formatDate(new Date());
+            
+            let currentHours = '';
+            try {
+                const data = JSON.parse(gen.engineHoursAtLastMaintenance || '{}');
+                currentHours = data.hours || '';
+            } catch(e) {
+                currentHours = gen.engineHoursAtLastMaintenance || '';
+            }
+            
+            document.getElementById('maint-hours').value = currentHours;
+            document.getElementById('maint-date').value = formatDateForInput(new Date());
             document.getElementById('maintenance-modal').classList.add('active');
+        }
+
+        function openHoursReportModal(id) {
+            const gen = generators.find(g => g._row == id);
+            document.getElementById('hours-id').value = id;
+            
+            let currentHours = '';
+            try {
+                const data = JSON.parse(gen.engineHoursAtLastMaintenance || '{}');
+                currentHours = data.hours || '';
+            } catch(e) {
+                currentHours = gen.engineHoursAtLastMaintenance || '';
+            }
+
+            document.getElementById('hours-value').value = currentHours;
+            document.getElementById('hours-date').value = formatDateForInput(new Date());
+            document.getElementById('hours-report-modal').classList.add('active');
+        }
+
+        async function handleHoursReportSubmit(event) {
+            event.preventDefault();
+            const id = document.getElementById('hours-id').value;
+            const hours = document.getElementById('hours-value').value;
+            const date = parseDate(document.getElementById('hours-date').value);
+
+            const payload = {
+                action: 'report_hours',
+                id,
+                engineHours: hours,
+                date
+            };
+
+            await sendUpdate(payload);
+            closeModal('hours-report-modal');
+            event.target.reset();
         }
 
         function addContactField(type, data = { name: '', phone: '', role: '' }) {
@@ -759,10 +925,12 @@
             if (!gen) return;
 
             document.getElementById('edit-id').value = id;
-            document.getElementById('edit-provider').value = gen.provider || '';
+            document.getElementById('edit-location').value = gen.location || '';
+            document.getElementById('edit-power').value = gen.power || '';
             document.getElementById('edit-manufacturer-pn').value = gen.manufacturerPartNumber || '';
             document.getElementById('edit-maintenance-company').value = gen.maintenanceCompany || '';
             document.getElementById('edit-idf-number').value = gen.idfNumber || '';
+            document.getElementById('edit-feeds').value = gen.feeds || '';
             document.getElementById('edit-purpose').value = gen.purpose || 'פעיל';
             document.getElementById('edit-status').value = gen.status || 'תקין';
             document.getElementById('edit-fault-description').value = gen.faultDescription || '';
@@ -776,9 +944,20 @@
             document.getElementById('edit-fuel-stock').value = gen.fuelFilterStock || 0;
             document.getElementById('edit-air-stock').value = gen.airFilterStock || 0;
             
-            document.getElementById('edit-last-check-date').value = formatDate(gen.lastMaintenanceDate);
+            // Handle JSON for maintenance date
+            let maintDate = '';
+            let maintHours = 0;
+            try {
+                const data = JSON.parse(gen.lastMaintenanceDate || '{}');
+                maintDate = data.date || gen.lastMaintenanceDate;
+                maintHours = data.hours || gen.engineHoursAtLastMaintenance || 0;
+            } catch(e) {
+                maintDate = gen.lastMaintenanceDate;
+                maintHours = gen.engineHoursAtLastMaintenance || 0;
+            }
             
-            document.getElementById('edit-last-check-hours').value = gen.engineHoursAtLastMaintenance || 0;
+            document.getElementById('edit-last-check-date').value = formatDateForInput(maintDate);
+            document.getElementById('edit-last-check-hours').value = maintHours;
             
             // Structured contacts
             const container = document.getElementById('edit-contacts-container');
@@ -802,6 +981,104 @@
 
         function openSettings() {
             document.getElementById('settings-modal').classList.add('active');
+        }
+
+        function openExportModal() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const filtered = generators.filter(g => {
+                if (g.status === 'deleted') return false;
+                const searchFields = [
+                    g.location, g.power, g.maintenanceCompany, g.manufacturerPartNumber,
+                    g.idfNumber, g.feeds, g.oilFilterPN, g.fuelFilterPN, g.airFilterPN, g.notes
+                ].map(f => (f || '').toLowerCase());
+                return searchFields.some(f => f.includes(searchTerm));
+            });
+
+            // Short Summary (Main Table Details)
+            let short = "סיכום טבלת גנרטורים:\n\n";
+            filtered.forEach(gen => {
+                const days = calculateDaysToMaintenance(gen);
+                let daysDisplay = "";
+                if (gen.purpose === 'גיבוי') daysDisplay = "גיבוי";
+                else if (days !== null) daysDisplay = days <= 0 ? `פיגור ${Math.abs(days)} ימים` : `${days} ימים לטיפול`;
+
+                let lastMaintShort = "";
+                try {
+                    const data = JSON.parse(gen.lastMaintenanceDate || '{}');
+                    lastMaintShort = `${formatDateShort(data.date)} (${data.hours || 0} ש')`;
+                } catch(e) { lastMaintShort = formatDateShort(gen.lastMaintenanceDate); }
+
+                short += `• ${gen.location} | ${gen.power || '-'} | ${gen.status}\n`;
+                short += `  תחזוקה: ${daysDisplay}\n`;
+                short += `  טיפול אחרון: ${lastMaintShort}\n`;
+                short += `  מלאי: ש:${gen.oilFilterStock} ד:${gen.fuelFilterStock} א:${gen.airFilterStock}\n\n`;
+            });
+
+            // Detailed Summary (Full Details + Contacts)
+            let detailed = "סיכום פרטי גנרטורים מלאים:\n\n";
+            filtered.forEach(gen => {
+                const days = calculateDaysToMaintenance(gen);
+                let maintStr = "";
+                if (gen.purpose === 'גיבוי') maintStr = "גיבוי";
+                else if (days !== null) maintStr = days <= 0 ? `פיגור של ${Math.abs(days)} ימים` : `עוד ${days} ימים`;
+
+                let lastMaintDate = '-';
+                let lastMaintHours = '0';
+                let lastMaintParts = 'לא צוין';
+                try {
+                    const data = JSON.parse(gen.lastMaintenanceDate || '{}');
+                    lastMaintDate = formatDate(data.date);
+                    lastMaintHours = data.hours || '0';
+                    lastMaintParts = data.parts || 'לא צוין';
+                } catch(e) { lastMaintDate = formatDate(gen.lastMaintenanceDate); }
+
+                detailed += `מיקום: ${gen.location}\n`;
+                detailed += `הספק: ${gen.power || '-'}\n`;
+                detailed += `מק"ט יצרן: ${gen.manufacturerPartNumber || '-'}\n`;
+                detailed += `חברה מתחזקת: ${gen.maintenanceCompany || '-'}\n`;
+                detailed += `מס' צה"לי: ${gen.idfNumber || '-'}\n`;
+                detailed += `מזין את: ${gen.feeds || '-'}\n`;
+                detailed += `ייעוד: ${gen.purpose || '-'}\n`;
+                detailed += `סטטוס: ${gen.status}\n`;
+                if (gen.status === 'תקול' && gen.faultDescription) detailed += `תקלה: ${gen.faultDescription}\n`;
+                detailed += `שעות מנוע: ${(() => {
+                    try { return JSON.parse(gen.engineHoursAtLastMaintenance || '{}').hours || 0; }
+                    catch(e) { return gen.engineHoursAtLastMaintenance || 0; }
+                })()}\n`;
+                detailed += `טיפול אחרון: ${lastMaintDate} (${lastMaintHours} ש')\n`;
+                detailed += `חלקים שהוחלפו: ${lastMaintParts}\n`;
+                detailed += `מק"טים פילטרים: שמן: ${gen.oilFilterPN || '-'}, דלק: ${gen.fuelFilterPN || '-'}, אוויר: ${gen.airFilterPN || '-'}\n`;
+                detailed += `מלאי נוכחי: שמן: ${gen.oilFilterStock}, דלק: ${gen.fuelFilterStock}, אוויר: ${gen.airFilterStock}\n`;
+                
+                // Contacts
+                let contacts = [];
+                try { contacts = JSON.parse(gen.contacts || '[]'); } catch(e) {}
+                if (contacts.length > 0) {
+                    detailed += `אנשי קשר:\n`;
+                    contacts.forEach(c => {
+                        detailed += `  - ${c.name}${c.role ? ' (' + c.role + ')' : ''}: ${c.phone}\n`;
+                    });
+                }
+
+                if (gen.notes) detailed += `הערות: ${gen.notes}\n`;
+                detailed += `-------------------\n\n`;
+            });
+
+            document.getElementById('export-short-text').value = short;
+            document.getElementById('export-detailed-text').value = detailed;
+            document.getElementById('export-modal').classList.add('active');
+        }
+
+        async function copyToClipboard(elementId) {
+            const textarea = document.getElementById(elementId);
+            try {
+                await navigator.clipboard.writeText(textarea.value);
+                showToast('הטקסט הועתק ללוח');
+            } catch (err) {
+                textarea.select();
+                document.execCommand('copy');
+                showToast('הטקסט הועתק ללוח');
+            }
         }
 
         function closeModal(id) {
@@ -861,11 +1138,26 @@
 
         async function handleAddSubmit(event) {
             event.preventDefault();
+            
+            const lastMaintDateStr = document.getElementById('add-last-check-date').value;
+            const lastMaintHours = document.getElementById('add-last-check-hours').value;
+            
+            const maintJson = JSON.stringify({
+                date: lastMaintDateStr,
+                hours: lastMaintHours,
+                parts: ''
+            });
+            
+            const hoursJson = JSON.stringify({
+                date: lastMaintDateStr,
+                hours: lastMaintHours
+            });
+
             const payload = {
                 action: 'add',
                 data: {
                     location: document.getElementById('add-location').value,
-                    provider: document.getElementById('add-provider').value,
+                    power: document.getElementById('add-power').value,
                     manufacturerPartNumber: document.getElementById('add-manufacturer-pn').value,
                     maintenanceCompany: document.getElementById('add-maintenance-company').value,
                     idfNumber: document.getElementById('add-idf-number').value,
@@ -882,8 +1174,8 @@
                     fuelFilterStock: parseInt(document.getElementById('add-fuel-stock').value) || 0,
                     airFilterStock: parseInt(document.getElementById('add-air-stock').value) || 0,
                     
-                    lastMaintenanceDate: parseDate(document.getElementById('add-last-check-date').value),
-                    engineHoursAtLastMaintenance: parseInt(document.getElementById('add-last-check-hours').value) || 0,
+                    lastMaintenanceDate: maintJson,
+                    engineHoursAtLastMaintenance: hoursJson,
                     
                     contacts: getContactsFromContainer('add'),
                     notes: document.getElementById('add-notes').value
@@ -898,14 +1190,42 @@
         async function handleEditSubmit(event) {
             event.preventDefault();
             const id = document.getElementById('edit-id').value;
+            const gen = generators.find(g => g._row == id);
+            
+            const lastMaintDateStr = document.getElementById('edit-last-check-date').value;
+            const lastMaintHours = document.getElementById('edit-last-check-hours').value;
+            
+            let maintJson = '';
+            try {
+                const existing = JSON.parse(gen.lastMaintenanceDate || '{}');
+                maintJson = JSON.stringify({
+                    date: lastMaintDateStr,
+                    hours: lastMaintHours,
+                    parts: existing.parts || ''
+                });
+            } catch(e) {
+                maintJson = JSON.stringify({
+                    date: lastMaintDateStr,
+                    hours: lastMaintHours,
+                    parts: ''
+                });
+            }
+
+            let hoursJson = JSON.stringify({
+                date: lastMaintDateStr,
+                hours: lastMaintHours
+            });
+
             const payload = {
                 action: 'update',
                 id,
                 data: {
-                    provider: document.getElementById('edit-provider').value,
+                    location: document.getElementById('edit-location').value,
+                    power: document.getElementById('edit-power').value,
                     manufacturerPartNumber: document.getElementById('edit-manufacturer-pn').value,
                     maintenanceCompany: document.getElementById('edit-maintenance-company').value,
                     idfNumber: document.getElementById('edit-idf-number').value,
+                    feeds: document.getElementById('edit-feeds').value,
                     purpose: document.getElementById('edit-purpose').value,
                     status: document.getElementById('edit-status').value,
                     faultDescription: document.getElementById('edit-fault-description').value,
@@ -918,8 +1238,8 @@
                     fuelFilterStock: parseInt(document.getElementById('edit-fuel-stock').value) || 0,
                     airFilterStock: parseInt(document.getElementById('edit-air-stock').value) || 0,
                     
-                    lastMaintenanceDate: parseDate(document.getElementById('edit-last-check-date').value),
-                    engineHoursAtLastMaintenance: parseInt(document.getElementById('edit-last-check-hours').value) || 0,
+                    lastMaintenanceDate: maintJson,
+                    engineHoursAtLastMaintenance: hoursJson,
                     
                     contacts: getContactsFromContainer('edit'),
                     notes: document.getElementById('edit-notes').value
@@ -961,14 +1281,31 @@
             const editBtn = document.getElementById('details-edit-btn');
 
             title.textContent = `גנרטור: ${gen.location}`;
-            editBtn.onclick = () => {
+            editBtn.onclick = (e) => {
+                e.stopPropagation();
                 closeModal('details-modal');
                 openEditModal(id);
             };
 
-            const days = calculateDaysToMaintenance(gen.lastMaintenanceDate);
+            const days = calculateDaysToMaintenance(gen);
             let statusClass = gen.status === 'תקין' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
-            let maintenanceClass = days <= 0 ? 'text-red-600 bg-red-50' : (days <= 14 ? 'text-amber-600 bg-amber-50' : 'text-slate-600 bg-slate-50');
+            
+            let maintenanceClass = 'text-slate-600 bg-slate-50';
+            let maintenanceText = '';
+            
+            if (gen.purpose === 'גיבוי') {
+                maintenanceText = '--גיבוי--';
+            } else {
+                if (days !== null && days <= 0) {
+                    maintenanceClass = 'text-red-600 bg-red-50';
+                    maintenanceText = 'בפיגור של ' + Math.abs(days) + ' ימים';
+                } else if (days !== null && days <= 14) {
+                    maintenanceClass = 'text-amber-600 bg-amber-50';
+                    maintenanceText = 'עוד ' + days + ' ימים לטיפול';
+                } else {
+                    maintenanceText = 'עוד ' + (days || 0) + ' ימים לטיפול';
+                }
+            }
 
             content.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -976,13 +1313,12 @@
                         <div class="p-4 rounded-xl border bg-slate-50">
                             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">מידע כללי</h3>
                             <div class="space-y-2">
-                                <div class="flex justify-between"><span class="text-slate-500">הספק:</span> <span class="font-medium">${gen.provider || '-'}</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">הספק:</span> <span class="font-medium">${gen.power || '-'}</span></div>
                                 <div class="flex justify-between"><span class="text-slate-500">מק"ט יצרן:</span> <span class="font-medium">${gen.manufacturerPartNumber || '-'}</span></div>
                                 <div class="flex justify-between"><span class="text-slate-500">חברה מתחזקת:</span> <span class="font-medium">${gen.maintenanceCompany || '-'}</span></div>
                                 <div class="flex justify-between"><span class="text-slate-500">מס' צה"לי:</span> <span class="font-medium">${gen.idfNumber || '-'}</span></div>
                                 <div class="flex justify-between"><span class="text-slate-500">מזין את:</span> <span class="font-medium">${gen.feeds || '-'}</span></div>
                                 <div class="flex justify-between"><span class="text-slate-500">ייעוד:</span> <span class="font-medium">${gen.purpose || '-'}</span></div>
-                                ${gen.status === 'תקול' && gen.faultDescription ? `<div class="flex justify-between"><span class="text-slate-500">תיאור תקלה:</span> <span class="font-medium text-red-600">${gen.faultDescription}</span></div>` : ''}
                             </div>
                         </div>
                         
@@ -991,19 +1327,56 @@
                             <div class="text-2xl font-bold">${gen.status}</div>
                             ${gen.status === 'תקול' && gen.faultDescription ? `<div class="text-sm opacity-80 mt-1">${gen.faultDescription}</div>` : ''}
                         </div>
+
+                        <div class="p-4 rounded-xl border bg-slate-50">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">שעות מנוע</h3>
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <div class="text-2xl font-bold">${(() => {
+                                        try {
+                                            const data = JSON.parse(gen.engineHoursAtLastMaintenance || '{}');
+                                            return data.hours || 0;
+                                        } catch(e) { return gen.engineHoursAtLastMaintenance || 0; }
+                                    })()}</div>
+                                    <div class="text-xs text-slate-400">דיווח אחרון: ${(() => {
+                                        try {
+                                            const data = JSON.parse(gen.engineHoursAtLastMaintenance || '{}');
+                                            return formatDate(data.date);
+                                        } catch(e) { return formatDate(gen.currentHoursDate); }
+                                    })()}</div>
+                                </div>
+                                <button onclick="openHoursReportModal('${gen._row}')" class="edit-only text-xs bg-white hover:bg-slate-100 px-3 py-1 rounded-lg border font-bold">דיווח שעות</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="space-y-4">
                         <div class="p-4 rounded-xl border ${maintenanceClass}">
                             <div class="flex justify-between items-start mb-2">
                                 <h3 class="text-xs font-bold opacity-60 uppercase tracking-wider">תחזוקה</h3>
-                                <button onclick="openMaintenanceModal('${gen._row}')" class="text-xs bg-white/50 hover:bg-white px-3 py-1 rounded-lg border font-bold">דיווח טיפול</button>
+                                <button onclick="openMaintenanceModal('${gen._row}')" class="edit-only text-xs bg-white/50 hover:bg-white px-3 py-1 rounded-lg border font-bold">דיווח טיפול</button>
                             </div>
                             <div class="text-xl font-bold mb-1">
-                                ${days <= 0 ? 'בפיגור של ' + Math.abs(days) + ' ימים' : 'עוד ' + days + ' ימים לטיפול'}
+                                ${maintenanceText}
                             </div>
-                            <div class="text-sm opacity-80">טיפול אחרון: ${formatDate(gen.lastMaintenanceDate)}</div>
-                            <div class="text-sm opacity-80">שעות מנוע בטיפול: ${gen.engineHoursAtLastMaintenance || 0}</div>
+                            <div class="text-sm opacity-80">טיפול אחרון: ${(() => {
+                                try {
+                                    const data = JSON.parse(gen.lastMaintenanceDate || '{}');
+                                    return formatDate(data.date);
+                                } catch(e) { return formatDate(gen.lastMaintenanceDate); }
+                            })()}</div>
+                            <div class="text-sm opacity-80">שעות מנוע בטיפול: ${(() => {
+                                try {
+                                    const data = JSON.parse(gen.lastMaintenanceDate || '{}');
+                                    return data.hours || 0;
+                                } catch(e) { return gen.engineHoursAtLastMaintenance || 0; }
+                            })()}</div>
+                            <div class="text-sm opacity-80 italic mt-1">חלקים שהוחלפו: ${(() => {
+                                try {
+                                    const data = JSON.parse(gen.lastMaintenanceDate || '{}');
+                                    return data.parts || 'לא צוין';
+                                } catch(e) { return gen.replacedParts || 'לא צוין'; }
+                            })()}</div>
                         </div>
 
                         <div class="p-4 rounded-xl border bg-slate-50">
@@ -1035,7 +1408,7 @@
                     </div>
                 </div>
 
-                <div class="p-4 rounded-xl border bg-slate-50">
+                <div class="p-4 rounded-xl border bg-slate-50 mt-6">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">אנשי קשר</h3>
                     <div class="space-y-2">
                         ${(() => {
@@ -1072,7 +1445,7 @@
                     </div>
                 </div>
 
-                <div class="p-4 rounded-xl border bg-slate-50">
+                <div class="p-4 rounded-xl border bg-slate-50 mt-6">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">הערות</h3>
                     <div class="text-sm whitespace-pre-wrap">${gen.notes || 'אין הערות'}</div>
                 </div>
@@ -1135,6 +1508,7 @@
                     if (btn.closest('#add-modal')) btn.textContent = 'הוסף';
                     else if (btn.closest('#edit-modal')) btn.textContent = 'שמור שינויים';
                     else if (btn.closest('#maintenance-modal')) btn.textContent = 'שמור טיפול';
+                    else if (btn.closest('#hours-report-modal')) btn.textContent = 'שמור דיווח';
                 });
             }
         }
