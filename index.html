@@ -232,7 +232,15 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">חברה מתחזקת</label>
-                        <input type="text" id="add-maintenance-company" class="w-full border rounded-lg p-2">
+                        <select id="add-maintenance-company" class="w-full border rounded-lg p-2">
+                            <option value="">בחר חברה...</option>
+                            <option value="פ.ק אלקטרה">פ.ק אלקטרה</option>
+                            <option value="שמרלינג">שמרלינג</option>
+                            <option value="Power-on">Power-on</option>
+                            <option value="קטרפילר">קטרפילר</option>
+                            <option value="LIDOR">LIDOR</option>
+                            <option value="צבאי">צבאי</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">מס' צה"לי</label>
@@ -247,6 +255,7 @@
                         <select id="add-purpose" class="w-full border rounded-lg p-2">
                             <option value="פעיל">פעיל</option>
                             <option value="גיבוי">גיבוי</option>
+                            <option value="סבב">סבב</option>
                         </select>
                     </div>
                     <div>
@@ -353,7 +362,15 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">חברה מתחזקת</label>
-                        <input type="text" id="edit-maintenance-company" class="w-full border rounded-lg p-2">
+                        <select id="edit-maintenance-company" class="w-full border rounded-lg p-2">
+                            <option value="">בחר חברה...</option>
+                            <option value="פ.ק אלקטרה">פ.ק אלקטרה</option>
+                            <option value="שמרלינג">שמרלינג</option>
+                            <option value="Power-on">Power-on</option>
+                            <option value="קטרפילר">קטרפילר</option>
+                            <option value="LIDOR">LIDOR</option>
+                            <option value="צבאי">צבאי</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">מס' צה"לי</label>
@@ -368,6 +385,7 @@
                         <select id="edit-purpose" class="w-full border rounded-lg p-2">
                             <option value="פעיל">פעיל</option>
                             <option value="גיבוי">גיבוי</option>
+                            <option value="סבב">סבב</option>
                         </select>
                     </div>
                     <div>
@@ -543,14 +561,11 @@
     <!-- Toast -->
     <div id="toast">
         <span id="toast-message"></span>
-        <button id="undo-btn" onclick="handleUndo()" class="text-amber-400 font-bold hover:underline">ביטול פעולה</button>
     </div>
 
     <script>
         const SCRIPT_ID = 'AKfycbz9vw-xWnD7sXFW5bc2ti0Q-WGat56-8xthGxDK-3gDz4WO7w6YbPxJj2xswqIuH5cc';
         let generators = [];
-        let lastAction = null;
-        let undoTimeout = null;
         let isEditMode = false;
 
         // Initialize
@@ -685,28 +700,53 @@
             return `${y}-${m}-${d}`;
         }
 
-        function calculateDaysToMaintenance(gen) {
-            if (gen.purpose === 'גיבוי') return null;
-            
-            let lastMaintHours = 0;
-            try {
-                const maintData = JSON.parse(gen.lastMaintenanceDate || '{}');
-                lastMaintHours = parseInt(maintData.hours) || 0;
-            } catch(e) {
-                lastMaintHours = parseInt(gen.engineHoursAtLastMaintenance) || 0;
-            }
+function calculateDaysToMaintenance(gen) {
+    if (gen.purpose === 'גיבוי') return null;
 
-            let currentHours = lastMaintHours;
-            try {
-                const hoursData = JSON.parse(gen.engineHoursAtLastMaintenance || '{}');
-                currentHours = parseInt(hoursData.hours) || lastMaintHours;
-            } catch(e) {}
-            
-            const remainingHours = (lastMaintHours + 500) - currentHours;
-            const daysRemaining = Math.floor(remainingHours / 24);
-            
-            return daysRemaining;
+    let lastMaintHours = 0;
+    let lastReportDate = null;
+    let currentHours = 0;
+
+    // 1. חילוץ נתונים מהשדה המורכב שקיים אצלך בקוד
+    try {
+        const maintData = JSON.parse(gen.lastMaintenanceDate || '{}');
+        lastMaintHours = parseFloat(maintData.hours) || 0; // השעות שהיו בטיפול האחרון
+        lastReportDate = maintData.date ? new Date(maintData.date) : null; // תאריך הטיפול/דיווח
+        
+        // כאן אנחנו בודקים אם יש דיווח שעות עדכני יותר (last_hours זה שדה נפוץ במערכות כאלו)
+        currentHours = parseFloat(gen.last_hours) || lastMaintHours; 
+        
+        // אם יש תאריך דיווח שעות נפרד, נשתמש בו
+        if (gen.last_report_date) {
+            lastReportDate = new Date(gen.last_report_date);
         }
+    } catch(e) {
+        // אם זה לא JSON, ננסה לקרוא כתאריך רגיל
+        lastReportDate = gen.lastMaintenanceDate ? new Date(gen.lastMaintenanceDate) : null;
+    }
+
+    if (!lastReportDate || isNaN(lastReportDate.getTime())) return null;
+
+    // 2. חישוב שעות שנותרו (500 פחות כמה שעבר מהטיפול ועד הדיווח האחרון)
+    const hoursAlreadyWorked = currentHours - lastMaintHours;
+    const hoursRemainingFromReport = 500 - hoursAlreadyWorked;
+
+    // 3. כמה ימים נותרו מהרגע של הדיווח
+    const daysFromReport = hoursRemainingFromReport / 24;
+
+    // 4. חישוב פער הימים מהדיווח ועד היום (זמן אמת)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    lastReportDate.setHours(0, 0, 0, 0);
+
+    const msDiff = today - lastReportDate;
+    const daysPassedSinceReport = Math.floor(msDiff / (1000 * 60 * 60 * 24));
+
+    // 5. התוצאה הסופית: ימים שנותרו מהדיווח פחות הימים שעברו מאז
+    const finalDaysLeft = Math.floor(daysFromReport - daysPassedSinceReport);
+
+    return finalDaysLeft;
+}
 
         function getUrgencyScore(gen) {
             if (gen.purpose === 'גיבוי') return 0;
@@ -736,7 +776,7 @@
                         g.fuelFilterPN,
                         g.airFilterPN,
                         g.notes
-                    ].map(f => (f || '').toLowerCase());
+                    ].map(f => String(f || '').toLowerCase());
                     
                     return searchFields.some(f => f.includes(searchTerm));
                 })
@@ -990,7 +1030,7 @@
                 const searchFields = [
                     g.location, g.power, g.maintenanceCompany, g.manufacturerPartNumber,
                     g.idfNumber, g.feeds, g.oilFilterPN, g.fuelFilterPN, g.airFilterPN, g.notes
-                ].map(f => (f || '').toLowerCase());
+                ].map(f => String(f || '').toLowerCase());
                 return searchFields.some(f => f.includes(searchTerm));
             });
 
@@ -1466,13 +1506,6 @@
 
             console.log('Sending update to:', url, payload);
             
-            // Store previous state for undo if it's an update or maintenance
-            let previousData = null;
-            if (payload.action === 'update' || payload.action === 'maintenance') {
-                const gen = generators.find(g => g._row == payload.id);
-                if (gen) previousData = { ...gen };
-            }
-
             try {
                 const response = await fetch(url, {
                     method: 'POST',
@@ -1487,13 +1520,7 @@
 
                 const result = await response.json();
                 if (result.status === 'success') {
-                    lastAction = { 
-                        type: payload.action, 
-                        id: payload.id, 
-                        previousData: previousData,
-                        timestamp: Date.now() 
-                    };
-                    showToast('הנתונים נשמרו בהצלחה', payload.action !== 'add');
+                    showToast('הנתונים נשמרו בהצלחה');
                     fetchData();
                 } else {
                     throw new Error(result.message || 'Unknown error from script');
@@ -1513,42 +1540,16 @@
             }
         }
 
-        function showToast(message, showUndo = false) {
+        function showToast(message) {
             const toast = document.getElementById('toast');
             const msgSpan = document.getElementById('toast-message');
-            const undoBtn = document.getElementById('undo-btn');
 
             msgSpan.textContent = message;
-            undoBtn.style.display = showUndo ? 'block' : 'none';
             toast.classList.add('active');
 
-            if (undoTimeout) clearTimeout(undoTimeout);
-            undoTimeout = setTimeout(() => {
+            setTimeout(() => {
                 toast.classList.remove('active');
-            }, 10000);
-        }
-
-        async function handleUndo() {
-            if (!lastAction || !lastAction.previousData) return;
-            const url = getScriptUrl();
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        action: 'undo', 
-                        id: lastAction.id, 
-                        data: lastAction.previousData 
-                    })
-                });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    showToast('הפעולה בוטלה');
-                    fetchData();
-                    lastAction = null;
-                }
-            } catch (error) {
-                console.error('Error during undo:', error);
-            }
+            }, 5000);
         }
 
         function openContacts(id) {
