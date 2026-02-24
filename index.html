@@ -95,13 +95,19 @@
                 <p class="text-slate-500">מעקב, תחזוקה ומלאי חלפים</p>
             </div>
         </header>
-        <!-- Search -->
-        <div class="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row gap-4">
-            <div class="flex-1 relative">
-                <input type="text" id="search-input" oninput="renderTable()" placeholder="חיפוש לפי מיקום, הספק או חברה..." class="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-slate-500 outline-none">
-                <div class="absolute right-3 top-2.5 text-slate-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                </div>
+        <!-- Filters -->
+        <div class="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-row gap-4">
+            <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">מיקום</label>
+                <select id="filter-location" onchange="renderTable()" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-slate-500 outline-none text-sm">
+                    <option value="">כל המיקומים</option>
+                </select>
+            </div>
+            <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">חברה</label>
+                <select id="filter-company" onchange="renderTable()" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-slate-500 outline-none text-sm">
+                    <option value="">כל החברות</option>
+                </select>
             </div>
         </div>
         <!-- Table Container -->
@@ -260,36 +266,15 @@
                         <input type="text" id="add-fault-description" class="w-full border rounded-lg p-2">
                     </div>
                     <div class="md:col-span-2 border-t pt-4 mt-2">
-                        <h3 class="font-bold text-slate-800 mb-2">מק"טים של חלקי חילוף</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <h3 class="font-bold text-slate-800 mb-2">תחזוקה וחלפים</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מק"ט פ. שמן</label>
-                                <input type="text" id="add-oil-pn" class="w-full border rounded-lg p-2 text-sm">
+                                <label class="block text-sm font-medium text-slate-700 mb-1">כמות שמן (ליטר)</label>
+                                <input type="number" step="0.1" id="add-oil-liters" class="w-full border rounded-lg p-2">
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מק"ט פ. דלק</label>
-                                <input type="text" id="add-fuel-pn" class="w-full border rounded-lg p-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מק"ט פ. אוויר</label>
-                                <input type="text" id="add-air-pn" class="w-full border rounded-lg p-2 text-sm">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="md:col-span-2 border-t pt-4 mt-2">
-                        <h3 class="font-bold text-slate-800 mb-2">מלאי נוכחי</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מלאי פ. שמן</label>
-                                <input type="number" id="add-oil-stock" value="0" class="w-full border rounded-lg p-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מלאי פ. דלק</label>
-                                <input type="number" id="add-fuel-stock" value="0" class="w-full border rounded-lg p-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מלאי פ. אוויר</label>
-                                <input type="number" id="add-air-stock" value="0" class="w-full border rounded-lg p-2 text-sm">
+                            <div class="flex items-center gap-2 pt-6">
+                                <input type="checkbox" id="add-has-kit" class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                                <label for="add-has-kit" class="text-sm font-medium text-slate-700">יש קיט חלפים במלאי</label>
                             </div>
                         </div>
                     </div>
@@ -389,36 +374,15 @@
                         <input type="text" id="edit-fault-description" class="w-full border rounded-lg p-2">
                     </div>
                     <div class="md:col-span-2 border-t pt-4 mt-2">
-                        <h3 class="font-bold text-slate-800 mb-2">מק"טים של חלקי חילוף</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <h3 class="font-bold text-slate-800 mb-2">תחזוקה וחלפים</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מק"ט פ. שמן</label>
-                                <input type="text" id="edit-oil-pn" class="w-full border rounded-lg p-2 text-sm">
+                                <label class="block text-sm font-medium text-slate-700 mb-1">כמות שמן (ליטר)</label>
+                                <input type="number" step="0.1" id="edit-oil-liters" class="w-full border rounded-lg p-2">
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מק"ט פ. דלק</label>
-                                <input type="text" id="edit-fuel-pn" class="w-full border rounded-lg p-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מק"ט פ. אוויר</label>
-                                <input type="text" id="edit-air-pn" class="w-full border rounded-lg p-2 text-sm">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="md:col-span-2 border-t pt-4 mt-2">
-                        <h3 class="font-bold text-slate-800 mb-2">מלאי נוכחי</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מלאי פ. שמן</label>
-                                <input type="number" id="edit-oil-stock" class="w-full border rounded-lg p-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מלאי פ. דלק</label>
-                                <input type="number" id="edit-fuel-stock" class="w-full border rounded-lg p-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1">מלאי פ. אוויר</label>
-                                <input type="number" id="edit-air-stock" class="w-full border rounded-lg p-2 text-sm">
+                            <div class="flex items-center gap-2 pt-6">
+                                <input type="checkbox" id="edit-has-kit" class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                                <label for="edit-has-kit" class="text-sm font-medium text-slate-700">יש קיט חלפים במלאי</label>
                             </div>
                         </div>
                     </div>
@@ -618,6 +582,7 @@
                 const result = await response.json();
                 if (result.status === 'success') {
                     generators = result.data;
+                    populateFilters();
                     renderTable();
                 } else {
                     throw new Error(result.message || 'Unknown error from script');
@@ -757,28 +722,36 @@ function calculateDaysToMaintenance(gen) {
             if (days <= 14) return 100 - days;
             return 0;
         }
+        function populateFilters() {
+            const locSelect = document.getElementById('filter-location');
+            const compSelect = document.getElementById('filter-company');
+            
+            const activeGenerators = generators.filter(g => g.status !== 'deleted');
+            
+            const locations = [...new Set(activeGenerators.map(g => g.location).filter(Boolean))].sort();
+            const companies = [...new Set(activeGenerators.map(g => g.maintenanceCompany).filter(Boolean))].sort();
+            
+            locSelect.innerHTML = '<option value="">כל המיקומים</option>' + 
+                locations.map(l => `<option value="${l}">${l}</option>`).join('');
+            
+            compSelect.innerHTML = '<option value="">כל החברות</option>' + 
+                companies.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
         function renderTable() {
             const tbody = document.getElementById('generator-table-body');
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const locFilter = document.getElementById('filter-location').value;
+            const compFilter = document.getElementById('filter-company').value;
+
             const filtered = generators
                 .filter(g => {
                     if (g.status === 'deleted') return false;
-                    const searchFields = [
-                        g.location,
-                        g.power,
-                        g.maintenanceCompany,
-                        g.manufacturerPartNumber,
-                        g.idfNumber,
-                        g.feeds,
-                        g.oilFilterPN,
-                        g.fuelFilterPN,
-                        g.airFilterPN,
-                        g.notes
-                    ].map(f => String(f || '').toLowerCase());
-                    
-                    return searchFields.some(f => f.includes(searchTerm));
+                    if (locFilter && g.location !== locFilter) return false;
+                    if (compFilter && g.maintenanceCompany !== compFilter) return false;
+                    return true;
                 })
                 .sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a));
+
             tbody.innerHTML = filtered.map(gen => {
                 const days = calculateDaysToMaintenance(gen);
                 let rowClass = 'safe';
@@ -791,26 +764,38 @@ function calculateDaysToMaintenance(gen) {
                 } else {
                     if (gen.status === 'תקול' || (days !== null && days <= 0)) rowClass = 'overdue';
                     else if (days !== null && days <= 14) rowClass = 'warning';
-                    daysDisplay = `<div class="font-medium ${days <= 0 ? 'text-red-600' : ''}">
-                        ${days <= 0 ? 'בפיגור של ' + Math.abs(days) + ' ימים' : days + ' ימים'}
+                    
+                    let sign = "";
+                    if (days > 0) sign = "+";
+                    else if (days < 0) sign = "-";
+                    
+                    const displayVal = days === 0 ? "0" : sign + Math.abs(days);
+                    
+                    daysDisplay = `<div class="font-bold text-lg ${days <= 0 ? 'text-red-600' : 'text-slate-700'}">
+                        ${displayVal}
                     </div>`;
                 }
+
+                const hasKit = gen.oilFilterPN === 'Yes' || gen.oilFilterPN === 'יש' || gen.oilFilterPN === true || gen.oilFilterPN === 'true';
+
                 return `
                     <tr class="${rowClass} border-b hover:bg-slate-50 transition-colors cursor-pointer" onclick="openDetailsModal('${gen._row}')">
-                        <td class="p-4">
+                        <td class="p-2">
                             <div>
-                                <div class="font-bold">${gen.location}</div>
-                                <div class="text-xs text-slate-500 mb-1">${gen.purpose || 'פעיל'} | ${gen.power || '-'}</div>
-                                <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${gen.status === 'תקין' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                                    ${gen.status}
-                                </span>
+                                <div class="font-bold text-slate-900 text-sm">${gen.location}</div>
+                                <div class="text-[10px] text-slate-500">${gen.power || '-'}</div>
+                                ${gen.status === 'תקול' ? `
+                                    <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase bg-red-100 text-red-700 border border-red-200">
+                                        תקול
+                                    </span>
+                                ` : ''}
                             </div>
                         </td>
-                        <td class="p-4">
+                        <td class="p-2 text-center">
                             ${daysDisplay}
                         </td>
-                        <td class="p-4">
-                            <div class="text-xs space-y-1">
+                        <td class="p-2">
+                            <div class="text-[10px] space-y-0.5">
                                 <div class="font-medium">${(() => {
                                     try {
                                         const data = JSON.parse(gen.lastMaintenanceDate || '{}');
@@ -829,11 +814,11 @@ function calculateDaysToMaintenance(gen) {
                                 })()}</div>
                             </div>
                         </td>
-                        <td class="p-4">
-                            <div class="flex flex-col gap-1 text-[10px]">
-                                <span class="${gen.oilFilterStock < 1 ? 'text-red-600 font-bold' : 'text-slate-600'}">שמן: ${gen.oilFilterStock}</span>
-                                <span class="${gen.fuelFilterStock < 1 ? 'text-red-600 font-bold' : 'text-slate-600'}">דלק: ${gen.fuelFilterStock}</span>
-                                <span class="${gen.airFilterStock < 1 ? 'text-red-600 font-bold' : 'text-green-600'}">אוויר: ${gen.airFilterStock}</span>
+                        <td class="p-2 text-center">
+                            <div class="flex flex-col items-center">
+                                ${hasKit ? 
+                                    '<span class="text-emerald-600 text-lg font-bold">✓</span>' : 
+                                    '<span class="text-red-500 text-lg font-bold">✕</span>'}
                             </div>
                         </td>
                     </tr>
@@ -960,13 +945,8 @@ function calculateDaysToMaintenance(gen) {
             document.getElementById('edit-fault-description').value = gen.faultDescription || '';
             toggleFaultDescription('edit');
             
-            document.getElementById('edit-oil-pn').value = gen.oilFilterPN || '';
-            document.getElementById('edit-fuel-pn').value = gen.fuelFilterPN || '';
-            document.getElementById('edit-air-pn').value = gen.airFilterPN || '';
-            
-            document.getElementById('edit-oil-stock').value = gen.oilFilterStock || 0;
-            document.getElementById('edit-fuel-stock').value = gen.fuelFilterStock || 0;
-            document.getElementById('edit-air-stock').value = gen.airFilterStock || 0;
+            document.getElementById('edit-oil-liters').value = gen.oilFilterStock || '';
+            document.getElementById('edit-has-kit').checked = gen.oilFilterPN === 'Yes' || gen.oilFilterPN === 'יש' || gen.oilFilterPN === true || gen.oilFilterPN === 'true';
             
             // Handle JSON for maintenance date
             let maintDate = '';
@@ -1005,14 +985,14 @@ function calculateDaysToMaintenance(gen) {
             document.getElementById('settings-modal').classList.add('active');
         }
         function openExportModal() {
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const locFilter = document.getElementById('filter-location').value;
+            const compFilter = document.getElementById('filter-company').value;
+
             const filtered = generators.filter(g => {
                 if (g.status === 'deleted') return false;
-                const searchFields = [
-                    g.location, g.power, g.maintenanceCompany, g.manufacturerPartNumber,
-                    g.idfNumber, g.feeds, g.oilFilterPN, g.fuelFilterPN, g.airFilterPN, g.notes
-                ].map(f => String(f || '').toLowerCase());
-                return searchFields.some(f => f.includes(searchTerm));
+                if (locFilter && g.location !== locFilter) return false;
+                if (compFilter && g.maintenanceCompany !== compFilter) return false;
+                return true;
             });
             // Short Summary (Main Table Details)
             let short = "סיכום טבלת גנרטורים:\n\n";
@@ -1021,16 +1001,20 @@ function calculateDaysToMaintenance(gen) {
                 let daysDisplay = "";
                 if (gen.purpose === 'גיבוי') daysDisplay = "גיבוי";
                 else if (gen.purpose === 'סבב') daysDisplay = "סבב";
-                else if (days !== null) daysDisplay = days <= 0 ? `פיגור ${Math.abs(days)} ימים` : `${days} ימים לטיפול`;
+                else if (days !== null) {
+                    let sign = days > 0 ? "+" : (days < 0 ? "-" : "");
+                    daysDisplay = days === 0 ? "0" : sign + Math.abs(days);
+                }
                 let lastMaintShort = "";
                 try {
                     const data = JSON.parse(gen.lastMaintenanceDate || '{}');
                     lastMaintShort = `${formatDateShort(data.date)} (${data.hours || 0} ש')`;
                 } catch(e) { lastMaintShort = formatDateShort(gen.lastMaintenanceDate); }
-                short += `• ${gen.location} | ${gen.power || '-'} | ${gen.status}\n`;
+                const hasKit = gen.oilFilterPN === 'Yes' || gen.oilFilterPN === 'יש' || gen.oilFilterPN === true || gen.oilFilterPN === 'true';
+                short += `• ${gen.location} | ${gen.power || '-'} | ${gen.status === 'תקול' ? 'תקול' : 'תקין'}\n`;
                 short += `  תחזוקה: ${daysDisplay}\n`;
                 short += `  טיפול אחרון: ${lastMaintShort}\n`;
-                short += `  מלאי: ש:${gen.oilFilterStock} ד:${gen.fuelFilterStock} א:${gen.airFilterStock}\n\n`;
+                short += `  מלאי: ${hasKit ? 'יש קיט' : 'אין קיט'} | שמן: ${gen.oilFilterStock || '-'}\n\n`;
             });
             // Detailed Summary (Full Details + Contacts)
             let detailed = "סיכום פרטי גנרטורים מלאים:\n\n";
@@ -1039,7 +1023,10 @@ function calculateDaysToMaintenance(gen) {
                 let maintStr = "";
                 if (gen.purpose === 'גיבוי') maintStr = "גיבוי";
                 else if (gen.purpose === 'סבב') maintStr = "סבב";
-                else if (days !== null) maintStr = days <= 0 ? `פיגור של ${Math.abs(days)} ימים` : `עוד ${days} ימים`;
+                else if (days !== null) {
+                    let sign = days > 0 ? "+" : (days < 0 ? "-" : "");
+                    maintStr = days === 0 ? "0" : sign + Math.abs(days);
+                }
                 let lastMaintDate = '-';
                 let lastMaintHours = '0';
                 let lastMaintParts = 'לא צוין';
@@ -1049,6 +1036,7 @@ function calculateDaysToMaintenance(gen) {
                     lastMaintHours = data.hours || '0';
                     lastMaintParts = data.parts || 'לא צוין';
                 } catch(e) { lastMaintDate = formatDate(gen.lastMaintenanceDate); }
+                const hasKit = gen.oilFilterPN === 'Yes' || gen.oilFilterPN === 'יש' || gen.oilFilterPN === true || gen.oilFilterPN === 'true';
                 detailed += `מיקום: ${gen.location}\n`;
                 detailed += `הספק: ${gen.power || '-'}\n`;
                 detailed += `מק"ט יצרן: ${gen.manufacturerPartNumber || '-'}\n`;
@@ -1064,8 +1052,8 @@ function calculateDaysToMaintenance(gen) {
                 })()}\n`;
                 detailed += `טיפול אחרון: ${lastMaintDate} (${lastMaintHours} ש')\n`;
                 detailed += `חלקים שהוחלפו: ${lastMaintParts}\n`;
-                detailed += `מק"טים פילטרים: שמן: ${gen.oilFilterPN || '-'}, דלק: ${gen.fuelFilterPN || '-'}, אוויר: ${gen.airFilterPN || '-'}\n`;
-                detailed += `מלאי נוכחי: שמן: ${gen.oilFilterStock}, דלק: ${gen.fuelFilterStock}, אוויר: ${gen.airFilterStock}\n`;
+                detailed += `קיט חלפים: ${hasKit ? 'יש' : 'אין'}\n`;
+                detailed += `ליטר שמן: ${gen.oilFilterStock || '-'}\n`;
                 
                 // Contacts
                 let contacts = [];
@@ -1173,13 +1161,8 @@ function calculateDaysToMaintenance(gen) {
                     status: document.getElementById('add-status').value,
                     faultDescription: document.getElementById('add-fault-description').value,
                     
-                    oilFilterPN: document.getElementById('add-oil-pn').value,
-                    fuelFilterPN: document.getElementById('add-fuel-pn').value,
-                    airFilterPN: document.getElementById('add-air-pn').value,
-                    
-                    oilFilterStock: parseInt(document.getElementById('add-oil-stock').value) || 0,
-                    fuelFilterStock: parseInt(document.getElementById('add-fuel-stock').value) || 0,
-                    airFilterStock: parseInt(document.getElementById('add-air-stock').value) || 0,
+                    oilFilterStock: document.getElementById('add-oil-liters').value,
+                    oilFilterPN: document.getElementById('add-has-kit').checked ? 'Yes' : 'No',
                     
                     lastMaintenanceDate: maintJson,
                     engineHoursAtLastMaintenance: hoursJson,
@@ -1233,13 +1216,8 @@ function calculateDaysToMaintenance(gen) {
                     status: document.getElementById('edit-status').value,
                     faultDescription: document.getElementById('edit-fault-description').value,
                     
-                    oilFilterPN: document.getElementById('edit-oil-pn').value,
-                    fuelFilterPN: document.getElementById('edit-fuel-pn').value,
-                    airFilterPN: document.getElementById('edit-air-pn').value,
-                    
-                    oilFilterStock: parseInt(document.getElementById('edit-oil-stock').value) || 0,
-                    fuelFilterStock: parseInt(document.getElementById('edit-fuel-stock').value) || 0,
-                    airFilterStock: parseInt(document.getElementById('edit-air-stock').value) || 0,
+                    oilFilterStock: document.getElementById('edit-oil-liters').value,
+                    oilFilterPN: document.getElementById('edit-has-kit').checked ? 'Yes' : 'No',
                     
                     lastMaintenanceDate: maintJson,
                     engineHoursAtLastMaintenance: hoursJson,
@@ -1303,6 +1281,9 @@ function calculateDaysToMaintenance(gen) {
                     maintenanceText = 'עוד ' + (days || 0) + ' ימים לטיפול';
                 }
             }
+            const hasKit = gen.oilFilterPN === 'Yes' || gen.oilFilterPN === 'יש' || gen.oilFilterPN === true || gen.oilFilterPN === 'true';
+            const oilLiters = gen.oilFilterStock || '-';
+
             content.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-4">
@@ -1315,14 +1296,17 @@ function calculateDaysToMaintenance(gen) {
                                 <div class="flex justify-between"><span class="text-slate-500">מס' צה"לי:</span> <span class="font-medium">${gen.idfNumber || '-'}</span></div>
                                 <div class="flex justify-between"><span class="text-slate-500">מזין את:</span> <span class="font-medium">${gen.feeds || '-'}</span></div>
                                 <div class="flex justify-between"><span class="text-slate-500">ייעוד:</span> <span class="font-medium">${gen.purpose || '-'}</span></div>
+                                <div class="flex justify-between pt-2 border-t">
+                                    <span class="text-slate-500">סטטוס:</span> 
+                                    <span class="font-bold ${gen.status === 'תקול' ? 'text-red-600' : 'text-green-600'}">${gen.status}</span>
+                                </div>
+                                ${gen.status === 'תקול' && gen.faultDescription ? `
+                                <div class="p-2 bg-red-50 text-red-700 text-xs rounded border border-red-100 mt-1">
+                                    <strong>תיאור תקלה:</strong> ${gen.faultDescription}
+                                </div>` : ''}
                             </div>
                         </div>
                         
-                        <div class="p-4 rounded-xl border ${statusClass}">
-                            <h3 class="text-xs font-bold opacity-60 uppercase tracking-wider mb-2">סטטוס נוכחי</h3>
-                            <div class="text-2xl font-bold">${gen.status}</div>
-                            ${gen.status === 'תקול' && gen.faultDescription ? `<div class="text-sm opacity-80 mt-1">${gen.faultDescription}</div>` : ''}
-                        </div>
                         <div class="p-4 rounded-xl border bg-slate-50">
                             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">שעות מנוע</h3>
                             <div class="flex justify-between items-end">
@@ -1376,25 +1360,14 @@ function calculateDaysToMaintenance(gen) {
                             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">חלקי חילוף ומלאי</h3>
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="text-sm font-medium">פילטר שמן</div>
-                                        <div class="text-xs text-slate-400">מק"ט: ${gen.oilFilterPN || '-'}</div>
-                                    </div>
-                                    <div class="text-lg font-bold ${gen.oilFilterStock < 1 ? 'text-red-600' : 'text-green-600'}">${gen.oilFilterStock}</div>
+                                    <span class="text-sm font-medium text-slate-500">קיט חלפים במלאי:</span>
+                                    <span class="font-bold ${hasKit ? 'text-emerald-600' : 'text-red-500'}">
+                                        ${hasKit ? 'יש' : 'אין'}
+                                    </span>
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="text-sm font-medium">פילטר דלק</div>
-                                        <div class="text-xs text-slate-400">מק"ט: ${gen.fuelFilterPN || '-'}</div>
-                                    </div>
-                                    <div class="text-lg font-bold ${gen.fuelFilterStock < 1 ? 'text-red-600' : 'text-green-600'}">${gen.fuelFilterStock}</div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="text-sm font-medium">פילטר אוויר</div>
-                                        <div class="text-xs text-slate-400">מק"ט: ${gen.airFilterPN || '-'}</div>
-                                    </div>
-                                    <div class="text-lg font-bold ${gen.airFilterStock < 1 ? 'text-red-600' : 'text-green-600'}">${gen.airFilterStock}</div>
+                                    <span class="text-sm font-medium text-slate-500">כמות שמן נדרשת:</span>
+                                    <span class="font-bold text-slate-700">${oilLiters} ליטר</span>
                                 </div>
                             </div>
                         </div>
