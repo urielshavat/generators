@@ -633,6 +633,19 @@
             const d = String(date.getDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
         }
+        function getWhatsAppLink(phone) {
+            if (!phone) return '#';
+            let clean = phone.replace(/\D/g, '');
+            // If it starts with 0, replace it with 972 (Israel country code)
+            if (clean.startsWith('0')) {
+                clean = '972' + clean.substring(1);
+            } 
+            // If it starts with 5 and has 9 digits, it's a mobile without leading 0
+            else if (clean.length === 9 && clean.startsWith('5')) {
+                clean = '972' + clean;
+            }
+            return `https://wa.me/${clean}`;
+        }
 function calculateDaysToMaintenance(gen) {
     // במידה והגנרטור מוגדר כ"סבב" או כ"גיבוי" - לא מציגים ימים
     if (gen.purpose === 'סבב' || gen.purpose === 'גיבוי') return null;
@@ -1404,7 +1417,7 @@ function calculateDaysToMaintenance(gen) {
                                             <a href="tel:${c.phone}" class="p-1.5 bg-slate-100 rounded-full hover:bg-slate-200" title="התקשר">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                                             </a>
-                                            <a href="https://wa.me/${c.phone.replace(/\D/g,'')}" target="_blank" class="p-1.5 bg-green-100 text-green-600 rounded-full hover:bg-green-200" title="WhatsApp">
+                                            <a href="${getWhatsAppLink(c.phone)}" target="_blank" class="p-1.5 bg-green-100 text-green-600 rounded-full hover:bg-green-200" title="WhatsApp">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.061 3.972L0 16l4.14-1.086c1.158.633 2.451.963 3.761.971h.004c4.366 0 7.925-3.559 7.929-7.929 0-2.117-.823-4.107-2.322-5.607zm-5.607 12.756h-.003c-1.185-.001-2.347-.319-3.361-.919l-.24-.142-2.498.656.668-2.438-.156-.248a6.57 6.57 0 0 1-1.006-3.504c.003-3.623 2.956-6.576 6.581-6.576 1.757 0 3.408.684 4.65 1.926a6.547 6.547 0 0 1 1.922 4.653c-.003 3.623-2.956 6.577-6.58 6.577zm3.557-4.873c-.195-.097-1.155-.57-1.334-.635-.179-.066-.31-.097-.44.097-.13.195-.503.635-.617.765-.114.13-.228.146-.423.049-.195-.097-.824-.304-1.57-.97-.58-.517-.972-1.155-1.086-1.35-.114-.195-.012-.301.085-.398.088-.087.195-.228.293-.34.098-.113.13-.195.195-.325.066-.13.033-.244-.017-.341-.05-.097-.44-1.06-.603-1.456-.158-.384-.317-.332-.44-.338-.114-.005-.245-.006-.375-.006-.13 0-.341.049-.52.244-.179.195-.684.668-.684 1.63 0 .963.7 1.894.797 2.025.098.13 1.377 2.102 3.335 2.947.466.201.829.321 1.112.411.468.148.894.127 1.231.077.376-.056 1.155-.472 1.317-.928.162-.456.162-.846.114-.928-.048-.082-.179-.13-.375-.227z"/></svg>
                                             </a>
                                         ` : ''}
@@ -1497,7 +1510,7 @@ function calculateDaysToMaintenance(gen) {
                                 <a href="tel:${c.phone}" class="p-2 bg-white rounded-full border hover:bg-slate-100" title="התקשר">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                                 </a>
-                                <a href="https://wa.me/${c.phone.replace(/\D/g,'')}" target="_blank" class="p-2 bg-green-500 text-white rounded-full hover:bg-green-600" title="WhatsApp">
+                                <a href="${getWhatsAppLink(c.phone)}" target="_blank" class="p-2 bg-green-500 text-white rounded-full hover:bg-green-600" title="WhatsApp">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.061 3.972L0 16l4.14-1.086c1.158.633 2.451.963 3.761.971h.004c4.366 0 7.925-3.559 7.929-7.929 0-2.117-.823-4.107-2.322-5.607zm-5.607 12.756h-.003c-1.185-.001-2.347-.319-3.361-.919l-.24-.142-2.498.656.668-2.438-.156-.248a6.57 6.57 0 0 1-1.006-3.504c.003-3.623 2.956-6.576 6.581-6.576 1.757 0 3.408.684 4.65 1.926a6.547 6.547 0 0 1 1.922 4.653c-.003 3.623-2.956 6.577-6.58 6.577zm3.557-4.873c-.195-.097-1.155-.57-1.334-.635-.179-.066-.31-.097-.44.097-.13.195-.503.635-.617.765-.114.13-.228.146-.423.049-.195-.097-.824-.304-1.57-.97-.58-.517-.972-1.155-1.086-1.35-.114-.195-.012-.301.085-.398.088-.087.195-.228.293-.34.098-.113.13-.195.195-.325.066-.13.033-.244-.017-.341-.05-.097-.44-1.06-.603-1.456-.158-.384-.317-.332-.44-.338-.114-.005-.245-.006-.375-.006-.13 0-.341.049-.52.244-.179.195-.684.668-.684 1.63 0 .963.7 1.894.797 2.025.098.13 1.377 2.102 3.335 2.947.466.201.829.321 1.112.411.468.148.894.127 1.231.077.376-.056 1.155-.472 1.317-.928.162-.456.162-.846.114-.928-.048-.082-.179-.13-.375-.227z"/></svg>
                                 </a>
                             ` : ''}
