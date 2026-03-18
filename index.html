@@ -504,13 +504,14 @@
     <script>
         const SCRIPT_ID = 'AKfycbz9vw-xWnD7sXFW5bc2ti0Q-WGat56-8xthGxDK-3gDz4WO7w6YbPxJj2xswqIuH5cc';
         let generators = [];
+        let expandedRows = new Set();
         let isEditMode = false;
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             // Check if already logged in (optional, but let's keep it simple for now)
             // fetchData(); // Don't fetch until mode is set
         });
-        function setMode(mode) {
+        window.setMode = function(mode) {
             if (mode === 'edit') {
                 const password = document.getElementById('entry-password').value;
                 if (password === '5555') {
@@ -528,14 +529,14 @@
                 fetchData();
             }
         }
-        function showEntryModal() {
+        window.showEntryModal = function() {
             document.getElementById('entry-modal').classList.add('active');
             document.getElementById('entry-password').value = '';
         }
         function getScriptUrl() {
             return `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
         }
-        async function runSetup() {
+        window.runSetup = async function() {
             const url = getScriptUrl();
             showToast('מתקין טבלה... אנא המתן');
             try {
@@ -557,7 +558,8 @@
                 showToast(`שגיאה בהתקנה: ${error.message}`);
             }
         }
-        async function fetchData() {
+        window.fetchData = async function() {
+            expandedRows.clear(); // Collapse all rows on refresh/save
             const url = getScriptUrl();
             const refreshBtn = document.getElementById('refresh-btn');
             const originalContent = refreshBtn.innerHTML;
@@ -728,6 +730,16 @@ function calculateDaysToMaintenance(gen) {
             if (days === null) return 5000;
             return days;
         }
+        window.toggleRow = function(rowId) {
+            const id = String(rowId);
+            if (expandedRows.has(id)) {
+                expandedRows.delete(id);
+            } else {
+                expandedRows.add(id);
+            }
+            renderTable();
+        }
+
         function populateFilters() {
             const locSelect = document.getElementById('filter-location');
             const compSelect = document.getElementById('filter-company');
@@ -766,6 +778,8 @@ function calculateDaysToMaintenance(gen) {
 
             tbody.innerHTML = filtered.map(gen => {
                 const days = calculateDaysToMaintenance(gen);
+                const isExpanded = expandedRows.has(String(gen._row));
+                const oilLiters = gen.oilFilterStock || '';
                 let rowClass = ''; // Default white
                 let daysDisplay = '';
                 
@@ -790,8 +804,122 @@ function calculateDaysToMaintenance(gen) {
 
                 const hasKit = gen.oilFilterPN === 'Yes' || gen.oilFilterPN === 'יש' || gen.oilFilterPN === true || gen.oilFilterPN === 'true';
 
+                let expandedContent = '';
+                if (isExpanded) {
+                    let contacts = [];
+                    try { 
+                        contacts = JSON.parse(gen.contacts || '[]'); 
+                        if (!Array.isArray(contacts)) contacts = [];
+                    } catch(e) {
+                        if (gen.contacts && gen.contacts.trim()) {
+                            contacts = [{ name: gen.contacts, phone: '', role: 'מידע ישן' }];
+                        }
+                    }
+
+                    // Engine hours logic
+                    let lastMaintHours = 0;
+                    let lastMaintDate = null;
+                    let lastReportHours = 0;
+                    let lastReportDate = null;
+                    let hasHoursReport = false;
+
+                    try {
+                        const maintData = JSON.parse(gen.lastMaintenanceDate || '{}');
+                        lastMaintHours = parseFloat(maintData.hours) || 0;
+                        lastMaintDate = maintData.date ? new Date(maintData.date) : null;
+                    } catch(e) {
+                        lastMaintDate = gen.lastMaintenanceDate ? new Date(gen.lastMaintenanceDate) : null;
+                        lastMaintHours = parseFloat(gen.last_check_hours) || 0;
+                    }
+
+                    try {
+                        const hoursData = JSON.parse(gen.engineHoursAtLastMaintenance || '{}');
+                        lastReportHours = parseFloat(hoursData.hours) || 0;
+                        lastReportDate = hoursData.date ? new Date(hoursData.date) : null;
+                        if (lastReportDate && lastMaintDate && lastReportDate > lastMaintDate) {
+                            hasHoursReport = true;
+                        }
+                    } catch(e) {}
+
+                    expandedContent = `
+                        <tr class="bg-slate-50 border-b">
+                            <td colspan="8" class="p-3">
+                                <div class="relative grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                                    <div class="sm:hidden flex justify-between items-start">
+                                        <div>
+                                            <span class="font-bold text-slate-500">מק"ט:</span> ${gen.manufacturerPartNumber || '-'}
+                                        </div>
+                                        <button onclick="event.stopPropagation(); openEditModal('${gen._row}')" class="edit-only text-slate-400 hover:text-slate-600 transition-colors" title="ערוך">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="hidden sm:block absolute left-0 top-0">
+                                        <button onclick="event.stopPropagation(); openEditModal('${gen._row}')" class="edit-only p-1 text-slate-400 hover:text-slate-600 transition-colors" title="ערוך">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="md:hidden">
+                                        <span class="font-bold text-slate-500">מס' צה"לי:</span> ${gen.idfNumber || '-'}
+                                    </div>
+                                    <div class="xl:hidden">
+                                        <span class="font-bold text-slate-500">חברה מתחזקת:</span> ${gen.maintenanceCompany || '-'}
+                                    </div>
+                                    
+                                    <div class="col-span-full border-t pt-1 mt-1">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                            <div class="space-y-0.5">
+                                                ${hasHoursReport ? `
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="font-bold text-slate-500">דיווח שעות אחרון:</span> 
+                                                        <span class="font-medium text-slate-900">${lastReportHours} ש'</span>
+                                                        <span class="text-xs text-slate-400 mr-1">(${formatDate(lastReportDate)})</span>
+                                                    </div>
+                                                ` : ''}
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-slate-500">טיפול אחרון:</span> 
+                                                    <span class="font-medium text-slate-900">${lastMaintHours} ש'</span>
+                                                    <span class="text-xs text-slate-400 mr-1">(${formatDate(lastMaintDate)})</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-wrap gap-2">
+                                                <button onclick="event.stopPropagation(); openHoursReportModal('${gen._row}')" class="edit-only bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-50 transition-colors">דיווח שעות</button>
+                                                <button onclick="event.stopPropagation(); openMaintenanceModal('${gen._row}')" class="edit-only bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-50 transition-colors">דיווח טיפול</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-full border-t pt-1">
+                                        <span class="font-bold text-slate-500">אנשי קשר:</span>
+                                        <div class="flex flex-wrap gap-2 mt-1">
+                                            ${contacts.length > 0 ? contacts.map(c => `
+                                                <div class="bg-white border rounded px-2 py-1 flex items-center gap-2">
+                                                    <span class="font-medium">${c.name}</span>
+                                                    <span class="text-xs text-slate-400">${c.role || ''}</span>
+                                                    ${c.phone ? `
+                                                        <a href="tel:${c.phone}" class="text-slate-400 hover:text-slate-600">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                        </a>
+                                                        <a href="${getWhatsAppLink(c.phone)}" target="_blank" class="text-emerald-500 hover:text-emerald-700">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.061 3.972L0 16l4.14-1.086c1.158.633 2.451.963 3.761.971h.004c4.366 0 7.925-3.559 7.929-7.929 0-2.117-.823-4.107-2.322-5.607zm-5.607 12.756h-.003c-1.185-.001-2.347-.319-3.361-.919l-.24-.142-2.498.656.668-2.438-.156-.248a6.57 6.57 0 0 1-1.006-3.504c.003-3.623 2.956-6.576 6.581-6.576 1.757 0 3.408.684 4.65 1.926a6.547 6.547 0 0 1 1.922 4.653c-.003 3.623-2.956 6.577-6.58 6.577zm3.557-4.873c-.195-.097-1.155-.57-1.334-.635-.179-.066-.31-.097-.44.097-.13.195-.503.635-.617.765-.114.13-.228.146-.423.049-.195-.097-.824-.304-1.57-.97-.58-.517-.972-1.155-1.086-1.35-.114-.195-.012-.301.085-.398.088-.087.195-.228.293-.34.098-.113.13-.195.195-.325.066-.13.033-.244-.017-.341-.05-.097-.44-1.06-.603-1.456-.158-.384-.317-.332-.44-.338-.114-.005-.245-.006-.375-.006-.13 0-.341.049-.52.244-.179.195-.684.668-.684 1.63 0 .963.7 1.894.797 2.025.098.13 1.377 2.102 3.335 2.947.466.201.829.321 1.112.411.468.148.894.127 1.231.077.376-.056 1.155-.472 1.317-.928.162-.456.162-.846.114-.928-.048-.082-.179-.13-.375-.227z"/></svg>
+                                        </a>
+                                    ` : ''}
+                                </div>
+                            `).join('') : '<span class="text-slate-400 italic">אין אנשי קשר</span>'}
+                        </div>
+                    </div>
+                                    ${gen.notes ? `
+                                        <div class="col-span-full lg:hidden border-t pt-1">
+                                            <span class="font-bold text-slate-500">הערות:</span> ${gen.notes}
+                                        </div>
+                                    ` : ''}
+                </div>
+            </td>
+        </tr>
+    `;
+                }
+
                 return `
-                    <tr class="${rowClass} border-b hover:bg-slate-50 transition-colors cursor-pointer" onclick="openDetailsModal('${gen._row}')">
+                    <tr class="${rowClass} border-b hover:bg-slate-50 transition-colors cursor-pointer ${isExpanded ? 'bg-slate-50' : ''}" onclick="toggleRow('${gen._row}')">
                         <td class="p-2">
                             <div>
                                 <div class="font-bold text-slate-900 text-sm">${gen.location}</div>
@@ -835,8 +963,9 @@ function calculateDaysToMaintenance(gen) {
                         <td class="p-2 text-center">
                             <div class="flex flex-col items-center">
                                 ${hasKit ? 
-                                    '<span class="text-emerald-600 text-lg font-bold">✓</span>' : 
-                                    '<span class="text-red-500 text-lg font-bold">✕</span>'}
+                                    '<span class="text-emerald-600 text-lg font-bold leading-none">✓</span>' : 
+                                    '<span class="text-red-500 text-lg font-bold leading-none">✕</span>'}
+                                ${oilLiters ? `<span class="text-[9px] text-slate-500 mt-0.5">${oilLiters} ליטר</span>` : ''}
                             </div>
                         </td>
                         <td class="p-2 text-center hidden xl:table-cell text-xs">
@@ -846,13 +975,14 @@ function calculateDaysToMaintenance(gen) {
                             ${gen.notes || '-'}
                         </td>
                     </tr>
+                    ${expandedContent}
                 `;
             }).join('');
         }
         function renderStats() {
             // Unused
         }
-        function toggleFaultDescription(prefix) {
+        window.toggleFaultDescription = function(prefix) {
             const status = document.getElementById(`${prefix}-status`).value;
             const container = document.getElementById(`${prefix}-fault-desc-container`);
             if (status === 'תקול') {
@@ -889,7 +1019,7 @@ function calculateDaysToMaintenance(gen) {
             document.getElementById('maint-date').value = formatDateForInput(new Date());
             document.getElementById('maintenance-modal').classList.add('active');
         }
-        function openHoursReportModal(id) {
+        window.openHoursReportModal = function(id) {
             const gen = generators.find(g => g._row == id);
             document.getElementById('hours-id').value = id;
             
@@ -920,7 +1050,7 @@ function calculateDaysToMaintenance(gen) {
             closeModal('details-modal');
             event.target.reset();
         }
-        function addContactField(type, data = { name: '', phone: '', role: '' }) {
+        window.addContactField = function(type, data = { name: '', phone: '', role: '' }) {
             const container = document.getElementById(`${type}-contacts-container`);
             const div = document.createElement('div');
             div.className = 'flex gap-2 items-start contact-row';
@@ -948,14 +1078,14 @@ function calculateDaysToMaintenance(gen) {
             });
             return JSON.stringify(contacts);
         }
-        function openAddModal() {
+        window.openAddModal = function() {
             document.getElementById('add-form').reset();
             document.getElementById('add-contacts-container').innerHTML = '';
             addContactField('add');
             toggleFaultDescription('add');
             document.getElementById('add-modal').classList.add('active');
         }
-        function openEditModal(id) {
+        window.openEditModal = function(id) {
             const gen = generators.find(g => g._row == id);
             if (!gen) return;
             document.getElementById('edit-id').value = id;
@@ -1006,10 +1136,10 @@ function calculateDaysToMaintenance(gen) {
             
             document.getElementById('edit-modal').classList.add('active');
         }
-        function openSettings() {
+        window.openSettings = function() {
             document.getElementById('settings-modal').classList.add('active');
         }
-        function openExportModal() {
+        window.openExportModal = function() {
             const locFilter = document.getElementById('filter-location').value;
             const compFilter = document.getElementById('filter-company').value;
 
@@ -1106,8 +1236,22 @@ function calculateDaysToMaintenance(gen) {
                 showToast('הטקסט הועתק ללוח');
             }
         }
-        function closeModal(id) {
+        window.closeModal = function(id) {
             document.getElementById(id).classList.remove('active');
+        }
+        window.reportHours = function(id) {
+            openHoursReportModal(id);
+        }
+        window.reportMaintenance = function(id) {
+            openMaintenanceModal(id);
+        }
+        window.logout = function() {
+            isEditMode = false;
+            document.body.classList.remove('edit-mode');
+            fetchData();
+        }
+        window.applyFilters = function() {
+            renderTable();
         }
         async function testConnection() {
             const id = document.getElementById('script-id-input').value.trim();
